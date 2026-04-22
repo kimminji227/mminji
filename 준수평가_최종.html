@@ -385,16 +385,23 @@ function reset(){
 function exportSummary(){
   var dept = DEPTS.filter(function(d){ return d.id===cur; })[0];
   var today = new Date().toLocaleDateString('ko-KR');
+
   var body = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px"><div><h2 style="margin-bottom:6px">법규 준수평가 결과 (' + dept.label + ')</h2><p style="font-size:13px;color:#666">점검일자: ' + today + '</p></div><table style="border-collapse:collapse;font-size:13px;text-align:center"><tr><th rowspan="2" style="border:1px solid #ccc;width:90px;vertical-align:middle;padding:6px">결재</th><th style="border:1px solid #ccc;padding:6px 18px">평가위원</th><th style="border:1px solid #ccc;padding:6px 18px">해당부서장</th></tr><tr><td style="border:1px solid #ccc;height:80px"></td><td style="border:1px solid #ccc"></td></tr></table></div><hr>';
+
   dept.laws.forEach(function(l, lIdx){
     body += '<h3 style="margin:16px 0 8px">' + l.name + '</h3><ul style="padding-left:20px">';
     l.items.forEach(function(it, i){
       var k = key(dept.id, lIdx, i);
       var s = state[k];
       var status = s.val==='y'?'적합':s.val==='n'?'부적합':s.val==='na'?'해당없음':'미평가';
+
       body += '<li style="margin-bottom:8px;line-height:1.6">[' + status + '] ' + it.q;
+
       if(s.docno) body += '<br>증빙: ' + s.docno;
-      if(s.files.length>0) body += '<br>파일: ' + s.files.map(function(f){ return '<a href="'+f.data+'" download="'+f.name+'">'+f.name+'</a>'; }).join(', ');
+      if(s.files.length>0) body += '<br>파일: ' + s.files.map(function(f){
+        return '<a href="'+f.data+'" download="'+f.name+'">'+f.name+'</a>';
+      }).join(', ');
+
       body += '</li>';
     });
     body += '</ul>';
@@ -402,14 +409,32 @@ function exportSummary(){
 
   var fullHtml = '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>법규점검결과_' + dept.label + '</title><style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:20px;max-width:800px;margin:0 auto}</style></head><body>' + body + '</body></html>';
 
+  // ⭐ 카톡 감지
+  var ua = navigator.userAgent.toLowerCase();
+  var isKakao = ua.indexOf('kakaotalk') > -1;
+
+  if(isKakao){
+    alert("카카오톡에서는 다운로드가 제한될 수 있습니다.\nChrome 또는 Safari로 열어주세요.");
+
+    var newWin = window.open();
+    newWin.document.write(fullHtml);
+    newWin.document.close();
+    return;
+  }
+
+  // ⭐ 일반 브라우저 다운로드
   var blob = new Blob([fullHtml], {type:'text/html;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+
   var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = '법규점검결과_' + dept.label + '_' + today + '.html';
+
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(a.href);
+
+  URL.revokeObjectURL(url);
 }
 
 render();
