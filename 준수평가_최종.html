@@ -386,6 +386,17 @@ function reset(){
 
 function exportSummary(){
   var dept = DEPTS.filter(function(d){ return d.id===cur; })[0];
+    // ⭐ 미완료 항목 검사 (여기부터 추가)
+  var allKeys = [];
+  dept.laws.forEach(function(l, lIdx){
+    l.items.forEach(function(_, i){ allKeys.push(key(dept.id, lIdx, i)); });
+  });
+  var unanswered = allKeys.filter(function(k){ return !state[k] || state[k].val === null; });
+  if(unanswered.length > 0){
+    alert('⚠️ 아직 ' + unanswered.length + '개 항목이 체크되지 않았습니다.\n모든 항목(적합 / 부적합 / 해당없음)을 선택한 후 내보내기 해주세요.');
+    return;
+  }
+  // ⭐ 여기까지 추가
   var today = new Date().toLocaleDateString('ko-KR');
 
   var body = '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px"><div><h2 style="margin-bottom:6px">법규 준수평가 결과 (' + dept.label + ')</h2><p style="font-size:13px;color:#666">점검일자: ' + today + '</p></div><table style="border-collapse:collapse;font-size:13px;text-align:center"><tr><th rowspan="2" style="border:1px solid #ccc;width:90px;vertical-align:middle;padding:6px">결재</th><th style="border:1px solid #ccc;padding:6px 18px">평가위원</th><th style="border:1px solid #ccc;padding:6px 18px">해당부서장</th></tr><tr><td style="border:1px solid #ccc;height:80px"></td><td style="border:1px solid #ccc"></td></tr></table></div><hr>';
